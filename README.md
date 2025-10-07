@@ -1,152 +1,169 @@
-# High-Performance-Cyber-Threat-Detection-using-Graph-Neural-Networks
-A machine learning-based system for detecting and classifying cyber threats using the MachineLearningCVE dataset
-## Problem Statement
+#  High-Performance Cyber Threat Detection using Graph Neural Networks 
 
-### **Cybersecurity Challenges**
-
-With the explosive growth of internet-connected devices and services, networks face a wide range of cyberattacks such as **DDoS, Port Scans, and DoS variants**. Traditional intrusion detection systems (IDS) struggle to keep pace due to:
-
-**Data Processing Limitations**
-- Network traffic logs contain millions of flows with dozens of features, making them computationally expensive to process.
-- CPU-based preprocessing pipelines are too slow for real-time detection.
-
-**Attack Detection Gaps**
-- Rule-based IDS cannot detect **zero-day attacks**.
-- Classical ML models (Decision Trees, SVM, etc.) treat flows independently and fail to capture **relationships between traffic patterns**.
-- Severe **class imbalance** (huge number of benign flows vs fewer rare attacks) biases models.
-
-**Computational Bottlenecks**
-- Long training times for large datasets.
-- Difficulty in scaling across multiple GPUs.
-- Limited integration of GPU acceleration with graph-based deep learning.
+A **GPU-accelerated and HPC-ready machine learning system** for detecting and classifying cyber threats using the **MachineLearningCVE** dataset (derived from CICIDS2017).  
+The system leverages **Graph Neural Networks (GCNs)** and **MPI-based distributed training** to enable scalable, high-performance intrusion detection on large network datasets.
 
 ---
 
-## Solution Approach
+##  Problem Statement
 
-This project builds a **GPU-accelerated cyber threat detection pipeline** using the **MachineLearningCVE dataset** (derived from CICIDS2017). The pipeline:
+###  Cybersecurity Challenges
 
-- Uses **RAPIDS (cuDF, cuML, Dask-cuDF)** for high-speed preprocessing directly on GPUs.
-- Converts network flows into a **graph structure** where:
-  - **Nodes** = traffic flows
-  - **Edges** = similarity relationships (via kNN)
-  - **Labels** = traffic class (Benign, DoS, DDoS, PortScan, Other)
-- Trains a **Graph Convolutional Network (GCN)** using **PyTorch Geometric (PyG)** for classification.
-- Scales across GPUs with **Distributed Data Parallel (DDP)**.
-- Evaluates with **classification reports and confusion matrices**.
+Modern networks face a variety of cyberattacks such as **DDoS**, **DoS**, and **Port Scans**. Traditional Intrusion Detection Systems (IDS) face several bottlenecks:
 
----
+####  Data Processing Limitations
+- Millions of network flows with dozens of features make CPU-based preprocessing slow.  
+- Real-time detection is difficult without GPU acceleration.
 
-## Project Overview
+####  Attack Detection Gaps
+- Signature-based IDS cannot detect **zero-day attacks**.  
+- Classical ML models fail to capture inter-flow relationships.  
+- Severe **class imbalance** (many benign flows vs few attacks) biases predictions.
 
-### **Core Objectives**
-1. **Efficient Data Handling**: Load and merge large CSVs on GPU.
-2. **Balanced Dataset**: Apply undersampling to prevent class dominance.
-3. **Graph Construction**: Build kNN similarity graphs for relational modeling.
-4. **GNN Model Training**: Train GCN for accurate multi-class classification.
-5. **Multi-GPU Scalability**: Use HPC with DDP for parallelism.
-6. **Evaluation**: Provide classification report, confusion matrix, and runtime analysis.
-
-### **Technical Innovation**
-- **End-to-End GPU Pipeline**: From CSV parsing → scaling → graph → training.
-- **Graph Representation of Traffic**: Captures contextual similarities among flows.
-- **Balanced Training**: Class weights + undersampling to handle imbalance.
-- **Scalable HPC Training**: DDP ensures linear scaling across multiple GPUs.
+####  Computational Bottlenecks
+- Long training times for large datasets.  
+- Multi-GPU scaling is non-trivial.  
+- Graph-based deep learning often lacks HPC integration.
 
 ---
 
-## Technical Architecture
+##  Solution Approach (HPC Ready)
 
-### **Cyber Threat Detection Pipeline**
-```
-MachineLearningCVE CSV Files →
-GPU-Accelerated Ingestion (Dask-cuDF) →
-Merge into Unified cuDF DataFrame →
-Label Mapping & Class Grouping →
-Class-Balanced Undersampling →
-Feature Scaling (cuML StandardScaler) →
-kNN Graph Construction →
-PyTorch Geometric GCN Model →
-Training (Single-GPU / Multi-GPU DDP) →
-Threat Classification →
-Evaluation (Report & Confusion Matrix)
-```
+This project implements a **distributed, GPU-accelerated pipeline** for cyber threat detection:
+
+1. **GPU Preprocessing:** Uses **RAPIDS (cuDF, cuML, Dask-cuDF)** for high-speed data loading and cleaning.  
+2. **Graph Representation:** Transforms network flows into **graphs**:  
+   - **Nodes:** individual traffic flows  
+   - **Edges:** similarity relationships via kNN  
+   - **Labels:** traffic classes (Benign, DoS, DDoS, PortScan, Other)  
+3. **Distributed GCN Training:**  
+   - **PyTorch Geometric** for GCN modeling  
+   - **MPI (via mpi4py)** for gradient synchronization  
+   - Scales to multiple GPUs or CPU cores in HPC clusters  
+4. **Evaluation:** Classification metrics, confusion matrices, and learning curve visualization.
 
 ---
 
-## Project Implementation Plan
+##  Core Objectives
+
+- Efficiently load and preprocess large CSV datasets on GPUs.  
+- Balance dataset with undersampling and class weights.  
+-  Build a kNN graph for relational modeling of network flows.  
+-  Train a **Graph Convolutional Network (GCN)** on large graphs.  
+-  Enable **distributed training on HPC clusters** with MPI.  
+-  Evaluate using precision, recall, F1-score, confusion matrices, and runtime benchmarks.
+
+---
+
+##  Technical Innovation
+
+| Feature | Innovation |
+|---------|------------|
+| End-to-End GPU Pipeline | From CSV ingestion → preprocessing → graph → distributed GCN training |
+| Graph-Based Modeling | Captures inter-flow relationships in network traffic |
+| Balanced Training | Weighted loss + undersampling handle class imbalance |
+| Distributed HPC Training | Gradient averaging using MPI (AllReduce) ensures scalability |
+| Multi-GPU Acceleration | Fully leverages CUDA devices for large datasets |
+
+---
+
+##  Technical Architecture
+
+### Cyber Threat Detection Pipeline
+
+    MachineLearningCVE CSVs
+    ↓
+    GPU-Accelerated Data Preprocessing (Dask-cuDF)
+    ↓
+    Unified cuDF DataFrame → Label Mapping & Class Grouping
+    ↓
+    Class-Balanced Undersampling
+    ↓
+    Feature Normalization (cuML StandardScaler)
+    ↓
+    kNN Graph Construction (5 neighbors)
+    ↓
+    PyTorch Geometric GCN Model
+    ↓
+    Distributed Training via MPI / DDP
+    ↓
+    Threat Classification
+    ↓
+    Evaluation: Classification Report & Confusion Matrix
+
+---
+
+##  Project Implementation Plan
 
 ### **Phase 1: Data Engineering & Preprocessing (2 weeks)**
-- Load **all CSV files** in parallel with Dask-cuDF.
-- Merge partitions into one GPU DataFrame (`cuDF`).
-- Clean column names and labels.
-- Map raw attack labels into grouped categories:
-  - DoS GoldenEye, Hulk, Slowloris, Slowhttptest → **DoS**
-  - DDoS → **DDoS**
-  - PortScan → **PortScan**
-  - BENIGN → **BENIGN**
-  - Others → **Other**
-- Perform **class-balanced undersampling** (cap at 50,000 records per class).
-- Select numeric features only; handle missing/infinite values.
-- Standardize features with **cuML StandardScaler**.
+- Load CSVs in parallel using **Dask-cuDF**.
+- Merge into a single **cuDF DataFrame**.
+- Clean column names and standardize labels.
+- Map attack types:
+  - DoS: GoldenEye, Hulk, Slowloris, Slowhttptest  
+  - DDoS → DDoS  
+  - PortScan → PortScan  
+  - BENIGN → BENIGN  
+  - Others → Other  
+- Apply **undersampling** (max 50,000 samples/class).
+- Retain **numeric features**, handle NaN/infinite values.
+- Apply **StandardScaler** for normalization.
 
 ---
 
 ### **Phase 2: Graph Construction (1 week)**
-- Build **kNN graph** on GPU using cuML NearestNeighbors.
-- Construct directed edges (`edge_index`).
-- Symmetrize edges and remove self-loops.
-- Encode labels with **cuML LabelEncoder**.
-- Perform stratified **train/test split (80/20)**.
-- Save processed graph tensors (`x`, `edge_index`, `y`, train/test indices) for reuse.
+- Use **cuML NearestNeighbors** for kNN graph generation.
+- Create edge indices (`edge_index`) and symmetrize edges.
+- Remove self-loops.
+- Encode labels using **cuML LabelEncoder**.
+- Perform stratified 80/20 train-test split.
+- Save graph tensors: `x`, `edge_index`, `y`, `train_mask`, `test_mask`.
 
 ---
 
 ### **Phase 3: GNN Model Training (2 weeks)**
-- Define **Graph Convolutional Network (GCN)**:
-  - Input → GCNConv → ReLU
-  - Hidden → GCNConv → ReLU
-  - Output → Linear → LogSoftmax
-- Train using:
-  - **Loss**: Weighted NLLLoss (class imbalance handling).
-  - **Optimizer**: Adam, lr=1e-2.
-  - **Epochs**: 200 max, with **early stopping (patience=10)**.
-- **Single GPU**: Direct training loop.
-- **Multi-GPU (DDP)**:
-  - Each rank processes its shard of training data.
-  - Metrics (loss, accuracy) reduced across GPUs using NCCL.
+- **Model Architecture (GCN):**
+- **Training Configuration:**
+- Loss: Weighted NLLLoss
+- Optimizer: Adam (lr=1e-2)
+- Epochs: up to 200 (early stopping, patience=10)
+- **Multi-GPU Training (DDP):**
+- Each GPU processes a shard of training data.
+- Metrics reduced using NCCL backend.
 
 ---
 
 ### **Phase 4: Evaluation & Reporting (1 week)**
-- Compute metrics: Accuracy, Precision, Recall, F1-score.
-- Generate **classification report** (per class performance).
-- Produce **confusion matrix** to visualize misclassifications.
-- Benchmark training time on **1 GPU vs multiple GPUs**.
+- Compute:
+- Accuracy
+- Precision / Recall / F1-score
+- Generate:
+- Classification report
+- Confusion matrix
+- Compare single-GPU vs multi-GPU runtime.
 - Analyze scalability and GPU utilization.
 
 ---
 
 ### **Phase 5: Deployment & Extension (Optional, 1–2 weeks)**
-- Save final GCN model for reuse.
-- Package pipeline for real-time IDS integration.
-- Build a dashboard to visualize:
-  - Attack type distribution
-  - Real-time predictions
-  - Confusion matrix results
+- Save trained GCN model (`gcn_model.pt`).
+- Package for **real-time IDS integration**.
+- Build a dashboard with:
+- Attack distribution
+- Real-time predictions
+- Confusion matrix visualization
 
 ---
 
-## Technical Specifications
-- **Dataset**: MachineLearningCVE (CICIDS2017)
-- **Platform**: Linux / WSL2 with CUDA GPUs
-- **Language**: Python 3.9+
-- **Core Libraries**:
-  - RAPIDS: cuDF, cuML, Dask-cuDF
-  - PyTorch + PyTorch Geometric
-  - scikit-learn for evaluation
-- **HPC Setup**: PyTorch DistributedDataParallel with NCCL backend
-- **Outputs**:
-  - Cached graph (`graph_cache.pt`)
-  - Trained GCN model
-  - Classification report + confusion matrix
+## ⚙️ Technical Specifications
+
+| Component | Description |
+|------------|-------------|
+| **Dataset** | MachineLearningCVE (CICIDS2017) |
+| **Language** | Python 3.9+ |
+| **Platform** | windows with CUDA GPUs |
+| **Core Libraries** |  PyTorch, PyTorch Geometric, scikit-learn |
+| **HPC Setup** | PyTorch DDP with NCCL backend |
+| **Outputs** | `features.npy`, `labels.npy`, `edge_index.npy`, `hpc_gcn_model.pth`, evaluation reports |
+
+---
